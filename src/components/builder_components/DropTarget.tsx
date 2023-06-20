@@ -97,14 +97,12 @@ export const DropTarget: FC = () => {
     ) {
       handleDrop({ name: 'Transformer', data: transformer_info })
     }
-    // else if(notTransformer/4 > names.length-notTransformer && (notTransformer % 4) !== 0) {
-    // 	handleRemove(names.indexOf('Transformer'))
-    // }
     const totalEnergy = data.reduce((acc, curr) => acc + curr.energy, 0)
     const totalCost = data.reduce((acc, curr) => acc + curr.cost, 0)
     setTotalCost(totalCost)
     setTotalEnergy(totalEnergy)
   }, [names])
+
 
   return (
     <div
@@ -144,7 +142,7 @@ export const DropTarget: FC = () => {
                       className='h-4 w-4'
                       style={{ backgroundColor: colorDictionary[item] }}
                     ></div>
-                    <div>&nbsp;{item}</div>
+                    <div>{` ${item}`}</div>
                   </div>
                 )
               })}
