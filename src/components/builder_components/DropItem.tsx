@@ -31,7 +31,7 @@ export const DropItem: FC<ItemProps> = function DropItem({name,data}) {
 			const dropResult = monitor.getDropResult<DropResult>();
 			// do something
 			if (item && dropResult) {
-				alert(`You dropped ${item.name} into ${dropResult.name}`)
+				// alert(`You dropped ${item.name} into ${dropResult.name}`)
 			}
 		},
 		// collect returns the isDragging elment and the handlerId of each object
@@ -39,6 +39,7 @@ export const DropItem: FC<ItemProps> = function DropItem({name,data}) {
 			isDragging: monitor.isDragging(),
 		})
 	}))
+
 	return(
 		<div ref={drag} className='w-16 h-16 border-2 border-blue-200'>
 		</div>

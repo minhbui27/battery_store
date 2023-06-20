@@ -18,8 +18,12 @@ import Builder from '../components/Builder'
 		<div class="fixed z-50 w-screen">
 			<Nav client:visible />
 		</div>
-			<Info client:only='react'/>
+			<Info client:visible/>
 			<Builder client:only='react'/>
 	</div>
 </body>
 
+<style is:global>
+	@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+	@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap');
+</style>

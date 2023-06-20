@@ -26,12 +26,5 @@
 		"energy": 1,
 		"cost": 20000,
 		"release_date": 2000
-	},
-	"Transformer": {
-		"floor_dimension_L": 40,
-		"floor_dimension_W": 10,
-		"energy": 4,
-		"cost": 10000,
-		"release_date": 0 
 	}
 }
