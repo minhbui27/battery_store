@@ -14,10 +14,12 @@ export default function Builder(): JSX.Element {
   return (
     <div className='h-screen w-full'>
       <div className='flex flex-row header-text text-5xl py-4 w-full justify-center items-center'>
-        Welcome to Our Schematic Builder!
+        Schematic Builder
       </div>
       <DndProvider backend={HTML5Backend}>
-        <DropTarget />
+				<div className='flex flex-row justify-center h-3/5'>
+					<DropTarget />
+				</div>
 				<div className='header-text text-xl p-2 flex flex-row justify-start items-center'>Drag one of the items below into the window above to begin!</div>
         {/* mapping each device in the json object into a separate drop item */}
         {devices_map.map((item) => (

@@ -3,6 +3,7 @@ import type { FC } from 'react'
 import { useDrop } from 'react-dnd'
 import { ItemTypes } from './ItemTypes'
 import '../../styles/Builder.scss'
+import { groupItems } from './helpers'
 
 export interface DataProps {
   floor_dimension_L: number
@@ -39,6 +40,7 @@ export const DropTarget: FC = () => {
   const [data, setData] = React.useState<DataProps[]>([])
   const [totalEnergy, setTotalEnergy] = React.useState<number>(0)
   const [totalCost, setTotalCost] = React.useState<number>(0)
+  const [arrangedData, setArrangedData] = React.useState<DataProps[][]>([[]])
 
   // mapping each unique Name to a different background color
   const uniqueNames: string[] = [...new Set(names)]
@@ -83,7 +85,9 @@ export const DropTarget: FC = () => {
   // When the item is hovering over, turn green, otherwise remain transparent
   const isActive = canDrop && isOver
   let backgroundColor = 'rgb(254 202 202)'
-  isActive ? (backgroundColor = 'green') : (backgroundColor = 'rgb(254 202 202)')
+  isActive
+    ? (backgroundColor = 'green')
+    : (backgroundColor = 'rgb(254 202 202)')
 
   React.useEffect(() => {
     let notTransformer = names.reduce((acc, curr) => {
@@ -101,14 +105,21 @@ export const DropTarget: FC = () => {
     const totalCost = data.reduce((acc, curr) => acc + curr.cost, 0)
     setTotalCost(totalCost)
     setTotalEnergy(totalEnergy)
-  }, [names])
 
+		// Reordering the data and names to match the width constraint & possibly optimize for area
+    let temp = groupItems(
+        names.map((name, index) => {
+          return { name: name, data: data[index] }
+        }),100
+      )
+		if(temp.length > 0) { console.log(temp[0].map(item => item.name)) }
+  }, [names])
 
   return (
     <div
       ref={drop}
       style={{ backgroundColor }}
-      className='flex flex-row h-1/2 w-full'
+      className='flex flex-row h-full w-4/5'
     >
       <div className='flex-grow'>
         {names.map((item, idx) => {
@@ -142,7 +153,7 @@ export const DropTarget: FC = () => {
                       className='h-4 w-4'
                       style={{ backgroundColor: colorDictionary[item] }}
                     ></div>
-                    <div>{` ${item}`}</div>
+                    <div>&nbsp;{item}</div>
                   </div>
                 )
               })}
@@ -151,7 +162,7 @@ export const DropTarget: FC = () => {
         ) : (
           <></>
         )}
-				{/* Only display the cost if currently greater than zero */}
+        {/* Only display the cost if currently greater than zero */}
         {totalCost > 0 ? (
           <>
             <div className='total-cost items-center justify-center flex flex-col bg-blue-500 h-16 w-full'>{`Total Cost: ${totalCost}`}</div>
@@ -159,7 +170,7 @@ export const DropTarget: FC = () => {
         ) : (
           <></>
         )}
-				{/* Only display the energy if currently greater than zero */}
+        {/* Only display the energy if currently greater than zero */}
         {totalEnergy > 0 ? (
           <>
             <div className='total-energy items-center justify-center flex flex-col bg-green-500 h-16 w-full'>{`Total Energy: ${totalEnergy}`}</div>
