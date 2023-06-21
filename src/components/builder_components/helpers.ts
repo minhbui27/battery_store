@@ -32,6 +32,17 @@ export function groupItems(items:ItemProps[], max_width:number) {
 
   return results;
 }
+
+export function flattenArray(items:ItemProps[][]) {
+	let output: ItemProps[][] = [[],[],[],[],[],[],[],[],[],[]];
+	items.map((item,idx) => {
+		for(let i = 0; i < item.length; i++) {
+			output[i].push(item[i])
+		}
+	})
+	return output
+}
+
 //
 // const items = [
 //   { floor_dimension_L: 10, floor_dimension_W: 10, energy: 0, cost: 0, release_date: 0 },

@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { useDrop } from 'react-dnd'
 import { ItemTypes } from './ItemTypes'
 import '../../styles/Builder.scss'
-import { groupItems } from './helpers'
+import { groupItems, flattenArray } from './helpers'
 
 export interface DataProps {
   floor_dimension_L: number
@@ -16,6 +16,10 @@ export interface DropProps {
   name: string
 }
 
+interface arrangedDataProps {
+	name: string
+  data: DataProps
+}
 export const DropTarget: FC = () => {
   const transformer_info = {
     floor_dimension_L: 10,
@@ -40,7 +44,7 @@ export const DropTarget: FC = () => {
   const [data, setData] = React.useState<DataProps[]>([])
   const [totalEnergy, setTotalEnergy] = React.useState<number>(0)
   const [totalCost, setTotalCost] = React.useState<number>(0)
-  const [arrangedData, setArrangedData] = React.useState<DataProps[][]>([[]])
+  const [arrangedData, setArrangedData] = React.useState<arrangedDataProps[][]>([[]])
 
   // mapping each unique Name to a different background color
   const uniqueNames: string[] = [...new Set(names)]
@@ -73,13 +77,10 @@ export const DropTarget: FC = () => {
   }))
 
   // function to remove item from list via index
-  const handleRemove = (index: number) => {
-    const tempNames = [...names]
-    const tempData = [...data]
-    tempData.splice(index, 1)
-    tempNames.splice(index, 1)
-    setNames(tempNames)
-    setData(tempData)
+  const handleRemove = (i: number, j: number) => {
+		if (arrangedData[i] && arrangedData[i][j]) {
+			arrangedData[i].splice(j, 1);
+		}
   }
 
   // When the item is hovering over, turn green, otherwise remain transparent
@@ -106,13 +107,17 @@ export const DropTarget: FC = () => {
     setTotalCost(totalCost)
     setTotalEnergy(totalEnergy)
 
-		// Reordering the data and names to match the width constraint & possibly optimize for area
+    // Reordering the data and names to match the width constraint & possibly optimize for area
     let temp = groupItems(
-        names.map((name, index) => {
-          return { name: name, data: data[index] }
-        }),100
-      )
-		if(temp.length > 0) { console.log(temp[0].map(item => item.name)) }
+      names.map((name, index) => {
+        return { name: name, data: data[index] }
+      }),
+      100
+    )
+    if (temp.length > 0) {
+      setArrangedData(flattenArray(temp))
+    }
+		console.log(arrangedData[0][0])
   }, [names])
 
   return (
@@ -122,18 +127,24 @@ export const DropTarget: FC = () => {
       className='flex flex-row h-full w-4/5'
     >
       <div className='flex-grow'>
-        {names.map((item, idx) => {
+        {arrangedData.map((item,sidx) => {
           return (
-            <div
-              style={{
-                width: scale * data[idx].floor_dimension_L,
-                height: scale * data[idx].floor_dimension_W,
-                backgroundColor: colorDictionary[item],
-              }}
-              className='flex justify-center items-center border-2 border-blue-200'
-              key={idx}
-            >
-              <button onClick={() => handleRemove(idx)}>🗑</button>
+            <div key={sidx} className='flex flex-row'>
+              {item.map((i, idx) => {
+                return (
+                  <div
+                    style={{
+                      width: scale * i.data.floor_dimension_L,
+                      height: scale * i.data.floor_dimension_W,
+                      backgroundColor: colorDictionary[i.name],
+                    }}
+										className='flex justify-center items-center border-2 border-blue-200'
+										key={idx}
+                  >
+										<button onClick={() => handleRemove(sidx,idx)}>🗑</button>
+									</div>
+                )
+              })}
             </div>
           )
         })}
