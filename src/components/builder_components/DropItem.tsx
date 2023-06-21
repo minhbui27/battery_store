@@ -41,7 +41,11 @@ export const DropItem: FC<ItemProps> = function DropItem({name,data}) {
 	}))
 
 	return(
-		<div ref={drag} className='w-16 h-16 border-2 border-blue-200'>
+		<div ref={drag} className='w-32 h-32 border-2 border-blue-200'>
+			<div className='absolute'>
+				<h1 className='text-center'>{name}</h1>
+			</div>
+			<img className='object-contain h-full' src={`/${name}.png`} alt={name}/>
 		</div>
 	)
 }

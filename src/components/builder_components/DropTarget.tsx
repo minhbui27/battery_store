@@ -3,7 +3,9 @@ import type { FC } from 'react'
 import { useDrop } from 'react-dnd'
 import { ItemTypes } from './ItemTypes'
 import '../../styles/Builder.scss'
-import { groupItems, flattenArray } from './helpers'
+import { calcArea, maxVerticalGap, groupItems, flattenArray, countOccurrences } from './helpers'
+import Slider from '@mui/material/Slider';
+import { Input } from '@mui/material'
 
 export interface DataProps {
   floor_dimension_L: number
@@ -12,12 +14,9 @@ export interface DataProps {
   cost: number
   release_date: number
 }
-export interface DropProps {
-  name: string
-}
 
 interface arrangedDataProps {
-	name: string
+  name: string
   data: DataProps
 }
 export const DropTarget: FC = () => {
@@ -28,7 +27,6 @@ export const DropTarget: FC = () => {
     cost: 10000,
     release_date: 0,
   }
-  const scale = 5
   // Assign a random color for each item in order to show in the legend. Must have # colors = # devices
   const colorList: string[] = [
     '#F05365',
@@ -45,6 +43,11 @@ export const DropTarget: FC = () => {
   const [totalEnergy, setTotalEnergy] = React.useState<number>(0)
   const [totalCost, setTotalCost] = React.useState<number>(0)
   const [arrangedData, setArrangedData] = React.useState<arrangedDataProps[][]>([[]])
+
+	// These are variables that the user can change to modify the layout
+	const [scale, setScale] = React.useState<number>(5)
+	const [horizontalGap, setHorizontalGap] = React.useState<number>(0)
+	const [verticalGap, setVerticalGap] = React.useState<number>(0)
 
   // mapping each unique Name to a different background color
   const uniqueNames: string[] = [...new Set(names)]
@@ -76,11 +79,27 @@ export const DropTarget: FC = () => {
     }),
   }))
 
-  // function to remove item from list via index
+  // function to remove item from list via index. Must updated the arranged data, the original names and data arrays
   const handleRemove = (i: number, j: number) => {
-		if (arrangedData[i] && arrangedData[i][j]) {
-			arrangedData[i].splice(j, 1);
-		}
+    if (arrangedData[i] && arrangedData[i][j]) {
+      let toRemove = arrangedData[i][j]
+      setArrangedData((data) => {
+        let temp = [...data]
+        temp[i].splice(j, 1)
+        return temp
+      })
+			// Very important that setData must be called first because I am removing via index of the string.
+      setData((data) => {
+        let updatedData = [...data]
+        updatedData.splice(names.indexOf(toRemove.name), 1)
+        return updatedData
+      })
+      setNames((names) => {
+        let updatedNames = [...names]
+        updatedNames.splice(names.indexOf(toRemove.name), 1)
+        return updatedNames
+      })
+    }
   }
 
   // When the item is hovering over, turn green, otherwise remain transparent
@@ -96,10 +115,9 @@ export const DropTarget: FC = () => {
       return acc
     }, 0)
     // logic to handle adding a Transformer every 4 devices automatically
-    if (
-      notTransformer % 4 === 0 &&
-      notTransformer / 4 !== names.length - notTransformer
-    ) {
+		// if the number of non Transformers are a multiple of 4, 
+		// and there isn't already a transformer for the previous multiple of 4 non Transformers
+    if (notTransformer % 4 === 0 && notTransformer / 4 !== names.length - notTransformer) {
       handleDrop({ name: 'Transformer', data: transformer_info })
     }
     const totalEnergy = data.reduce((acc, curr) => acc + curr.energy, 0)
@@ -117,7 +135,7 @@ export const DropTarget: FC = () => {
     if (temp.length > 0) {
       setArrangedData(flattenArray(temp))
     }
-		console.log(arrangedData[0][0])
+		setVerticalGap(verticalGap => Math.min(verticalGap,maxVerticalGap(arrangedData,scale)))
   }, [names])
 
   return (
@@ -126,31 +144,33 @@ export const DropTarget: FC = () => {
       style={{ backgroundColor }}
       className='flex flex-row h-full w-4/5'
     >
-      <div className='flex-grow'>
-        {arrangedData.map((item,sidx) => {
+			{/* Container of the items in the layout */}
+      <div className="p-8 flex-grow overflow-auto">
+        {arrangedData.map((item, sidx) => {
           return (
-            <div key={sidx} className='flex flex-row'>
+            <div key={sidx} style={{marginBottom: verticalGap*scale + "px"}} className='flex flex-row'>
               {item.map((i, idx) => {
                 return (
                   <div
                     style={{
+											marginRight: horizontalGap*scale + "px",
                       width: scale * i.data.floor_dimension_L,
                       height: scale * i.data.floor_dimension_W,
                       backgroundColor: colorDictionary[i.name],
                     }}
-										className='flex justify-center items-center border-2 border-blue-200'
-										key={idx}
+                    className='flex justify-center items-center border-2 border-black'
+                    key={idx}
                   >
-										<button onClick={() => handleRemove(sidx,idx)}>🗑</button>
-									</div>
+                    <button style={{fontSize: 5*scale}} onClick={() => handleRemove(sidx, idx)}>🗑</button>
+                  </div>
                 )
               })}
             </div>
           )
         })}
       </div>
-      {/* The legend the the items below it */}
-      <div className='flex flex-col justify-start w-1/5 overflow-y-auto h-80 bg-transparent'>
+      {/* The legend and the items below it */}
+      <div className='flex flex-col justify-start w-1/5 overflow-y-auto bg-transparent'>
         {names.length > 0 ? (
           <>
             <div className='z-10 bg-red-50 text-legend py-2 text-xl flex flex-row justify-center h-8'>
@@ -176,7 +196,7 @@ export const DropTarget: FC = () => {
         {/* Only display the cost if currently greater than zero */}
         {totalCost > 0 ? (
           <>
-            <div className='total-cost items-center justify-center flex flex-col bg-blue-500 h-16 w-full'>{`Total Cost: ${totalCost}`}</div>
+            <div className='total-cost items-center justify-center flex flex-col bg-blue-500 h-12 w-full'>{`Total Cost: $${totalCost}`}</div>
           </>
         ) : (
           <></>
@@ -184,7 +204,63 @@ export const DropTarget: FC = () => {
         {/* Only display the energy if currently greater than zero */}
         {totalEnergy > 0 ? (
           <>
-            <div className='total-energy items-center justify-center flex flex-col bg-green-500 h-16 w-full'>{`Total Energy: ${totalEnergy}`}</div>
+            <div className='total-energy items-center justify-center flex flex-col bg-green-500 h-12 w-full'>{`Total Energy: ${totalEnergy} MWh`}</div>
+          </>
+        ) : (
+          <></>
+        )}
+        {names.length > 0 ? (
+          <>
+            <div className='total-cost items-center justify-center flex flex-col bg-amber-500 h-12 w-full'>{`Total Area: ${calcArea(arrangedData,horizontalGap,verticalGap).area}`}</div>
+						<div className='bg-rose-100 h-40 flex flex-col'>
+							<div className='total-energy pt-2 flex justify-center items-center'>Devices list:</div>
+							{uniqueNames.map((item,idx) => {
+								return (
+									<div key={idx} className='flex flex-row justify-center'>{`${item}: ${countOccurrences(names)[item]}`}</div>
+								)
+							})}
+						</div>
+						<div className='h-28 bg-emerald-100 flex flex-col justify-start items-center'>
+							<div className='flex flex-row w-3/5'>
+								<div className='px-2'>Scale</div>
+								<Slider size="small" value={scale} step={0.1} defaultValue={scale} min={1} max={10} onChange={(e: any) => setScale(e.target.value)} aria-label="Default" valueLabelDisplay="auto" />
+							</div>
+							<div className='flex flex-row justify-center items-center w-full px-2'>	
+								<div className='w-5/6 pl-2'>Horizontal Gap (ft)</div>
+								<div className='w-1/6'>
+									<Input
+										value={horizontalGap}
+										size="small"
+										onChange={(e: any) => setHorizontalGap(e.target.value)}
+										inputProps={{
+											step: 1,
+											min: 0,
+											max: 10,
+											type: 'number',
+											'aria-labelledby': 'input-slider',
+										}}
+									/>
+								</div>
+							</div>
+							<div className='flex flex-row justify-center items-center w-full px-2'>	
+								<div className='w-5/6 pl-2'>Vertical Gap (ft)</div>
+								<div className='w-1/6'>
+									{/* Make sure the scaling vertical does not let the max width exceed 100 ft. If there are 10 items, max vgap = 0*/}
+									<Input
+										value={verticalGap < maxVerticalGap(arrangedData,scale) ? verticalGap : maxVerticalGap(arrangedData,scale)}
+										size="small"
+										onChange={(e: any) => setVerticalGap(e.target.value)}
+										inputProps={{
+											step: 1,
+											min: 0,
+											max: maxVerticalGap(arrangedData,scale),
+											type: 'number',
+											'aria-labelledby': 'input-slider',
+										}}
+									/>
+								</div>
+							</div>
+						</div>
           </>
         ) : (
           <></>
