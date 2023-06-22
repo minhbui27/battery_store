@@ -48,7 +48,7 @@ export default function Info(): JSX.Element {
 				</div>
 				<div className='space-x-2 md:space-x-0 my-4 mx-0 md:mx-4 flex justify-center flex-row md:flex-col h-96 md:h-full w-full md:w-96'>
 					<div className='flex flex-col rounded-xl my-2 w-1/2 md:w-full h-full md:h-1/2 bg-blue-300'>
-						<h1 className='text-center mx-2 my-2 text-md md:text-2xl'>Megapack 2XL</h1>
+						<h1 className='text-center mx-2 my-2 text-md md:text-2xl'>Transformer</h1>
 						<div className='mx-8 text-sm md:text-xl md:px-8 justify-start'>
 							<p>Length x Width: 10ft x 10ft</p>
 							<p>Energy Consumption: 0.25MWh</p>

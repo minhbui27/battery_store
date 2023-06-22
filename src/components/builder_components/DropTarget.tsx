@@ -6,6 +6,7 @@ import '../../styles/Builder.scss'
 import { calcArea, maxVerticalGap, groupItems, flattenArray, countOccurrences } from './helpers'
 import Slider from '@mui/material/Slider';
 import { Input } from '@mui/material'
+import { devices_map } from '../Builder'
 
 export interface DataProps {
   floor_dimension_L: number
@@ -19,6 +20,14 @@ interface arrangedDataProps {
   name: string
   data: DataProps
 }
+
+// converting devices_map into a dictionary to be used for the manual adding
+// this will be immutable
+const devicesDict = devices_map.reduce((acc, {name, data}) => {
+	acc[name] = data;
+	return acc
+}, {} as {[key:string]: DataProps})
+
 export const DropTarget: FC = () => {
   const transformer_info = {
     floor_dimension_L: 10,
@@ -109,17 +118,16 @@ export const DropTarget: FC = () => {
     ? (backgroundColor = 'green')
     : (backgroundColor = 'rgb(254 202 202)')
 
+	// Update when names are changed
   React.useEffect(() => {
-    let notTransformer = names.reduce((acc, curr) => {
-      if (curr !== 'Transformer') acc++
-      return acc
-    }, 0)
     // logic to handle adding a Transformer every 4 devices automatically
 		// if the number of non Transformers are a multiple of 4, 
 		// and there isn't already a transformer for the previous multiple of 4 non Transformers
-    if (notTransformer % 4 === 0 && notTransformer / 4 !== names.length - notTransformer) {
-      handleDrop({ name: 'Transformer', data: transformer_info })
-    }
+		let countTransformers = countOccurrences(names)['Transformer'] === undefined ? 0 : countOccurrences(names)['Transformer']
+		for(let i = 0; i < Math.floor(((names.length-countTransformers)/4)-countTransformers); i++) {
+			handleDrop({name: 'Transformer',data:transformer_info})
+		}
+
     const totalEnergy = data.reduce((acc, curr) => acc + curr.energy, 0)
     const totalCost = data.reduce((acc, curr) => acc + curr.cost, 0)
     setTotalCost(totalCost)
@@ -138,14 +146,40 @@ export const DropTarget: FC = () => {
 		setVerticalGap(verticalGap => Math.min(verticalGap,maxVerticalGap(arrangedData,scale)))
   }, [names])
 
+	// function to handle the adding via the materialui input block until the devices list
+	const handleInput = (target: number, name: string) => {
+		let numOcc = countOccurrences(names)[name];
+		if(target >= numOcc) {
+			for(let i = 0; i < target - numOcc; i++) {
+				handleDrop({name: name, data: devicesDict[name]})
+			}
+		}
+		else {
+			for(let c = 0; c < numOcc-target; c++) {
+				for(let i = 0; i < arrangedData.length; i++) {
+					for(let j = 0; j < arrangedData[i].length; j++) {
+						if(arrangedData[i][j].name == name) {
+							handleRemove(i,j);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	/*-------------------------------------------------------------------------------*/
+	/*--------------------------------Begin of return--------------------------------*/
+	/*-------------------------------------------------------------------------------*/
   return (
     <div
       ref={drop}
       style={{ backgroundColor }}
-      className='flex flex-row h-full w-4/5'
+      className='flex self-center flex-row h-full w-4/5'
     >
 			{/* Container of the items in the layout */}
-      <div className="p-8 flex-grow overflow-auto">
+      <div className='p-8 w-4/5 overflow-auto'>
         {arrangedData.map((item, sidx) => {
           return (
             <div key={sidx} style={{marginBottom: verticalGap*scale + "px"}} className='flex flex-row'>
@@ -158,7 +192,7 @@ export const DropTarget: FC = () => {
                       height: scale * i.data.floor_dimension_W,
                       backgroundColor: colorDictionary[i.name],
                     }}
-                    className='flex justify-center items-center border-2 border-black'
+                    className='flex-shrink-0 flex justify-center items-center border-2 border-black'
                     key={idx}
                   >
                     <button style={{fontSize: 5*scale}} onClick={() => handleRemove(sidx, idx)}>🗑</button>
@@ -211,12 +245,27 @@ export const DropTarget: FC = () => {
         )}
         {names.length > 0 ? (
           <>
-            <div className='total-cost items-center justify-center flex flex-col bg-amber-500 h-12 w-full'>{`Total Area: ${calcArea(arrangedData,horizontalGap,verticalGap).area}`}</div>
+            <div className='total-cost items-center justify-center flex flex-col bg-amber-500 h-12 w-full'>{`Total Area: ${calcArea(arrangedData,horizontalGap,verticalGap).area} sq. ft`}</div>
 						<div className='bg-rose-100 h-40 flex flex-col'>
 							<div className='total-energy pt-2 flex justify-center items-center'>Devices list:</div>
 							{uniqueNames.map((item,idx) => {
 								return (
-									<div key={idx} className='flex flex-row justify-center'>{`${item}: ${countOccurrences(names)[item]}`}</div>
+									<div key={idx} className='flex flex-row justify-center'>{`${item}: `}
+									<div className='w-8 ml-2'>
+										{item !== 'Transformer' ? <Input
+											value={countOccurrences(names)[item]}
+											sx={{height:'10px',fontSize:'15px'}}
+											size="small"
+											onChange={(e: any) => handleInput(e.target.value,item)}
+											inputProps={{
+												step: 1,
+												min: 0,
+												type: 'number',
+												'aria-labelledby': 'input-slider',
+											}}
+										/> : <div>{`${countOccurrences(names)[item]}`}</div>}
+									</div>
+									</div>
 								)
 							})}
 						</div>
