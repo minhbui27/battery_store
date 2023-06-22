@@ -13,7 +13,7 @@ Then to start the development server, run
 npm start
 ```
 NOTE: I just found a bug with astroJS (I think)
-you need to go to components/builder_components/Builder.tsx and hit save in the file, the page should then look like this
+you need to go to components/Builder.tsx and hit save in the file, the page should then look like this
 ![image](https://github.com/minhbui27/battery_store/assets/63686864/16be816f-5150-42c8-80ad-b37bca1df411)
 For some strange reason it doesn't load on start
 
