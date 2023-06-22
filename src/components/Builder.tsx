@@ -7,7 +7,7 @@ import { DropItem } from './builder_components/DropItem'
 import '../styles/Builder.scss'
 import devices from './builder_components/devices.json'
 
-export const devices_map = Object.entries(devices).map(([name, data]) => {
+const devices_map = Object.entries(devices).map(([name, data]) => {
 	return { name, data }
 })
 export default function Builder(): JSX.Element {

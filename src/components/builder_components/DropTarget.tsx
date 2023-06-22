@@ -6,7 +6,7 @@ import '../../styles/Builder.scss'
 import { calcArea, maxVerticalGap, groupItems, flattenArray, countOccurrences } from './helpers'
 import Slider from '@mui/material/Slider';
 import { Input } from '@mui/material'
-import { devices_map } from '../Builder'
+import devices from './devices.json'
 
 export interface DataProps {
   floor_dimension_L: number
@@ -20,6 +20,11 @@ interface arrangedDataProps {
   name: string
   data: DataProps
 }
+
+// Have to reimport because there is a bug with async calls atm. Cannot just import this from Builder.tsx
+const devices_map = Object.entries(devices).map(([name, data]) => {
+	return { name, data }
+})
 
 // converting devices_map into a dictionary to be used for the manual adding
 // this will be immutable
